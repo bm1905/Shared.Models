@@ -14,8 +14,6 @@ variables:
 jobs:
 - job: CreateNugetPackage
   displayName: Create Nuget Package
-  dependsOn: BuildAndTest
-  condition: succeeded()
   steps:
   - task: NuGetAuthenticate@1
   - task: DotNetCoreCLI@2
