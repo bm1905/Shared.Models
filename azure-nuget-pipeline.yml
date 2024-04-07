@@ -10,47 +10,25 @@ variables:
   project: '**/Shared.Models.csproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-  major: '1'
-  minor: '0'
-  revision: $[counter(variables['minor'], 1)] # This will get reset every time minor gets bumped.
-  nugetVersion: '$(major).$(minor).$(revision)'
 
-name: 1.0.$(Rev:r)
 jobs:
-- job: BuildAndTest
-  displayName: Build and Test
+- job: CreateNugetPackage
+  displayName: Create Nuget Package
   steps:
-  - task: NuGetToolInstaller@1
-    displayName: nuget installer
-    inputs:
-      versionSpec: 
-      checkLatest: true
-  
-  - task: NuGetCommand@2
-    displayName: dotnet restore
-    inputs:
-      command: 'restore'
-      restoreSolution: '$(solution)'
-      feedsToUse: 'select'
-      vstsFeed: 'bba3d55c-7ef9-4bfe-80bd-2381616bf711'
+  - task: NuGetAuthenticate@1
   - task: DotNetCoreCLI@2
     displayName: dotnet build
     inputs:
       command: 'build'
-      projects: '$(solution)'
-
-- job: CreateNugetPackage
-  displayName: Create Nuget Package
-  dependsOn: BuildAndTest
-  condition: succeeded()
-  steps:
-  - task: NuGetAuthenticate@1
+      arguments: '--configuration $(buildConfiguration)'
+      projects: '$(project)'
   - task: DotNetCoreCLI@2
     displayName: dotnet pack
     inputs:
       command: 'pack'
       packagesToPack: '$(project)'
-      versioningScheme: 'byBuildNumber'
+      nobuild: true
+      versioningScheme: 'off'
   - task: DotNetCoreCLI@2
     displayName: dotnet push
     inputs:
@@ -58,6 +36,7 @@ jobs:
       packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
       nuGetFeedType: 'internal'
       publishVstsFeed: 'bba3d55c-7ef9-4bfe-80bd-2381616bf711'
+      versioningScheme: 'off'
   - task: PublishBuildArtifacts@1
     displayName: publish artifact
     inputs:
